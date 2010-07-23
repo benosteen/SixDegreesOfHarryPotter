@@ -45,10 +45,6 @@ for potter in potters:
 print r_books
 s.addrelated("1", r_books)
 
-s.talis_populate_level_up("1")
-s.talis_populate_level_up("2")
-s.talis_populate_level_up("3")
-s.talis_populate_level_up("4")
-s.talis_populate_level_up("5")
-s.talis_populate_level_up("6")
+for level in ["1", "2", "3", "4", "5", "6"]
+    s.talis_populate_level_up(level)
 
