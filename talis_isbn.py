@@ -18,5 +18,13 @@ class ISBNAPI(object):
         rest['verb'] = "appears-with"
         count = kw.get("count", 25)
         (resp, content) = self.h.request("?".join([self.b % (rest),"count=%s&api_key=hackday" % count]))
-        return simplejson.loads(content)
-
+        try: 
+            payload = simplejson.loads(content)
+            return payload
+        except simplejson.decoder.JSONDecodeError:
+            print "Got unintelligible response from Talis Server"
+            print resp
+            print "-"*30
+            print content
+            print "-"*30
+            return {'recommendations':[]}

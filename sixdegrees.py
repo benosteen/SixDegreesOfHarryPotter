@@ -14,11 +14,13 @@ class SixDegrees(object):
 
     def talis_appearswith(self, isbn, cache_update = False):
         if not cache_update:
+            searched = self.r.get("talis:appearswith:%s" % isbn)
             cached = self.r.smembers("ct:isbn:%s" % isbn)
-            if cached: return cached
+            if searched: return cached
         i = ISBNAPI()
         data = i.appearswith(isbn=isbn)
         records = data['recommendations']
+        self.r.set("talis:appearswith:%s" % isbn, 1)
         if records:
             related_books = []
             for record in records:
@@ -37,10 +39,24 @@ class SixDegrees(object):
             self.r.set("isbn:%s" % isbn, title) # isbn --> "title"
 
     def get_title(self, isbn):
-        return self.r.get("isbn:%s" % book)
+        return self.r.get("isbn:%s" % isbn)
 
     def list_potter_isbns(self):
         return self.r.smembers("h")
+ 
+    def get_related(self, level):
+        return self.r.smembers("r%s" % level)
+
+    def talis_populate_level_up(self, base_level):
+        next_level = int(base_level) + 1
+        seeds = self.get_related(base_level)
+        n_level = []
+        for isbn in seeds:
+            resp = self.talis_appearswith(isbn)
+            if resp:
+                n_level.extend(resp)
+        self.addrelated(next_level, n_level)
+        return self.get_related(next_level)
 
     def addrelated(self, level, isbns):
         for item in isbns:
