@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+
+consumer_key = "000000000"
+consumer_secret = "111111111"
