@@ -1,0 +1,74 @@
+Six Degrees Of Harry Potter
+---------------------------
+
+23 July 2010 - #DevCSI Reading List Hack event @ Cambridge
+
+Aim:
+----
+
+To /prove/ that any item checked out of an academic library is no more than 6 'related' loans from a Harry Potter book of some kind.
+
+Requires:
+---------
+
+Talis Aspire 'ISBN' API (http://prototype.talisaspire.com/isbn/)
+(see http://twitter.com/robotrobot/status/19282383847)
+
+A Redis instance running on localhost with the relevant redis-py python library installed. (Scripts only use basic set and value operations.)
+
+To Run:
+-------
+
+python prep_bottom_up.py
+
+This will:
+
+ - parse and run through the OpenLibrary json reponse for 'books by J K Rowling', and push the results into Redis via the SixDegrees class.
+
+Resultant Redis data structures:
+  Key 'h' -> Set of all Harry Potter Book ISBNs
+  Key 'isbn:XXXXXXX' -> Value, Title of ISBN XXXX
+
+ - Load the list of Potter ISBNs and pass them through the Talis 'appears-with' API call.
+
+Resultant Redis structures:
+  Key 'r1' -> Set of all 'appears-with' ISBNs from the Harry Potter ISBNs
+
+ - build up the next level of 'appears-with' items from the previous set
+
+  Key 'r{n}' -> Set of all 'appears-with' ISBNs from the 'r{n-1}' set
+
+To Query:
+---------
+
+Once you have run 'prep_bottom_up.py', you can then query your results from the Redis DB:
+
+(Please see http://code.google.com/p/redis/wiki/CommandReference for the list of commands, and specifically, the commands you can do on sets, like scard, smembers, sinter, etc)
+
+Either, via the redis-cli:
+
+cd redis-XXXX
+sixdegreesofpotter/redis-2.0.0-rc2$ ./redis-cli scard r1
+(integer) 12
+sixdegreesofpotter/redis-2.0.0-rc2$ ./redis-cli smembers r1
+1. "0141439769"
+2. "0749707119"
+3. "0198124929"
+4. "000711561X"
+5. "0141323558"
+6. "0393975428"
+7. "0140366717"
+8. "0590139614"
+9. "0439994926"
+10. "0140350047"
+11. "0439999464"
+12. "0141322624"
+
+or via python:
+$ python
+>>> from sixdegrees import SixDegrees
+>>> s = SixDegrees()
+>>> s.r
+<redis.client.Redis object at 0x9ff3e14>
+>>> s.get_related("4")
+set(['0709910932', '0521390869', '0571089062', '0393926362', '0631197575', '0710000995', '0241134730', '000711561X', '0375751513', '1405832827', '0465017185', '019953702X', '0192829556', '0415069378', '1907439021', '0140434275', '0439994926', '0140366717', '0860915700', '0198710429', '1853812773', '0199535639', '0140434003', '0416924506', '0747532745', '069107819X', '041506936X', '0749707119', '0333487087', '0631234357', '0140350047', '0590139614', '0439999464', '0192833650', '0195073886', '0141323558', '0099511487', '0198124929', '074630725X', '0141322624', '0133555615', '0199537240', '0803235615', '0198710410', '0520048024', '0141439769', '0631234365', '0748601384', '0393975428', '0192835203', '0674211014', '0198185065'])
