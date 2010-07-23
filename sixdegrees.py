@@ -2,6 +2,7 @@
 
 from redis import Redis
 from talis_isbn import ISBNAPI
+from openlibrary import OLAPI
 
 class SixDegrees(object):
     """Key guide:
@@ -28,6 +29,11 @@ class SixDegrees(object):
                     related_books.append(record['id'][5:])
                     self.r.sadd("ct:isbn:%s" % isbn, record['id'][5:])
             return related_books
+
+    def ol_lookup_isbn_10(self, isbn, params_to_return=['title','subjects']):
+        ol = OLAPI()
+        r_keys = dict( [(x, "") for x in params_to_return] )
+        return ol.query(isbn_10=isbn, **r_keys)
 
     def load_potter_isbns(self, books):
         for book in books:
