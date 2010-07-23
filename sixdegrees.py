@@ -29,8 +29,15 @@ class SixDegrees(object):
 
     def load_potter_isbns(self, books):
         for book in books:
-            self.r.sadd("h", book)
-            self.r.set("isbn:%s" % book, books[book]) # isbn --> "title"
+            self.add_potter_book(book, books[book])
+
+    def add_potter_book(self, isbn, title=None):
+        self.r.sadd("h", isbn)
+        if title:
+            self.r.set("isbn:%s" % isbn, title) # isbn --> "title"
+
+    def get_title(self, isbn):
+        return self.r.get("isbn:%s" % book)
 
     def list_potter_isbns(self):
         return self.r.smembers("h")
